@@ -224,3 +224,33 @@ Tested both split strategies with the residual formulation:
 | — | analytical | Pure Pythagorean | — | 3.61316 |
 
 All subsequent attempts (stratified split, interaction terms, residual model, year normalisation, tree/boosting models) failed to improve on v11.
+
+## Appendix
+"To go further would require a fundamentally different data source"
+
+**What this means**
+
+Kaggle splits the test set into two parts:
+- **Public leaderboard (54%)**: The score you see now when you submit. Used during the competition for feedback.
+- **Private leaderboard (46%)**: Hidden until the competition closes. Determines final rankings.
+
+**Why Kaggle does this**
+
+Without the split, you could game the leaderboard by submitting hundreds of times, observing score changes, and reverse-engineering the test labels. The private set stays hidden so your final score reflects genuine generalization, not test set exploitation.
+
+**The practical risk: overfitting to the public leaderboard**
+
+If you keep tweaking your model to improve the public score, you risk overfitting to that 54% slice. Your private score may then be worse - sometimes significantly. This is called **leaderboard overfitting** and is common in Kaggle competitions.
+
+**What it means for your situation**
+
+Your 3.04393 public score could go up or down on the private set. The year-on-year variance you identified as structural noise affects both splits - so your score is unlikely to move dramatically.
+
+The competitor at 2.90946 faces the same risk. If their approach overfit to the public 54%, they may drop on the private leaderboard.
+
+**The lesson**
+
+Trust your cross-validation MAE more than your public leaderboard score. CV on training data is a more honest estimate of generalization than iterating against a fixed test slice.
+
+## The broader lesson
+In ML, there are three sources of error: model error, feature error, and irreducible noise. You've minimized the first two with your current data. What remains is irreducible given the available information - and the only way past it is richer data, not a smarter model.
