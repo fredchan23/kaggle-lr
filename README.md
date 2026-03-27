@@ -42,6 +42,7 @@ Use this section as the canonical experiment log. Update it every time the model
 | v12 | Added `run_diff×win_exp` + `win_exp×G` interaction terms; stratified train/test split by era | 71 | 2.6047 | 2.7686 (LR) | — | 0.9314 | `submission_LinearRegression_*.csv` | Stratified split makes local eval more honest (MAE 2.81→2.77) but Kaggle score regressed to 3.05159 (LR) / 3.05325 (Ridge). Interaction terms + wider feature set overfit slightly. Random-split v11 RidgeCV still holds best Kaggle score. See local/Kaggle gap analysis below. |
 | v13 | Pythagorean Residual RidgeCV — stratified split | 71 | 2.6173 | 2.7659 | — | 0.9321 | `submission_PythagoreanResidualRidge_*.csv` | Best local MAE (2.7659) but Kaggle 3.05304. Stratified split + residual both tested. |
 | v14 | Pythagorean Residual RidgeCV — random split (same as v11 conditions) | 71 | 2.6057 | 2.8141 | — | 0.9221 | `submission_PythagoreanResidualRidge_*.csv` | Ties RidgeCV locally (2.8141 vs 2.8140) but Kaggle **3.05653** — definitively worse than plain RidgeCV. Residual formulation exhausted. |
+| v15 | Added year-level normalisation: `R_vs_lg`, `RA_vs_lg`, `R_ratio_lg`, `RA_ratio_lg` (all vs `mlb_rpg`) | 75 | 2.6139 | 2.8195 | — | 0.9219 | `submission_RidgeCV_*.csv` | Hurt both local MAE (2.8140→2.8195) and Kaggle (3.04894→3.05210). `mlb_rpg` already in feature set captures the same signal; explicit normalisation adds redundancy. **Exploration complete — v11 remains best.** |
 | analytical | Pure Pythagorean baseline: `W = round(R²/(R²+RA²) × G)` — no ML | — | — | 3.2942 | — | — | `submission_Pythagorean_*.csv` | Kaggle: **3.61316**. Confirms ML pipeline adds ~0.57 MAE of genuine signal over the analytical formula. Model is not adding noise. |
 
 ## Why Feature Count Increased To 55
@@ -197,7 +198,7 @@ Across all submitted versions, a persistent ~0.2 MAE gap exists between local te
 - The ~0.2 gap is likely driven by year-on-year variance in baseball scoring environment not fully captured by era/decade indicators
 - **v11 random-split RidgeCV holds the best Kaggle score (3.04393)**
 
-## Pythagorean Residual Finding (v13–v14) — CLOSED
+## Pythagorean Residual & Year-Normalisation Finding (v13–v15) — CLOSED
 
 Tested both split strategies with the residual formulation:
 
@@ -207,9 +208,19 @@ Tested both split strategies with the residual formulation:
 | Random split (v14) | 2.8141 | 3.05653 |
 | v11 plain RidgeCV (random) | 2.8169 | **3.04393** |
 
-**Conclusion:** Pythagorean residual is definitively worse on Kaggle regardless of split. Despite tying locally (2.8141 vs 2.8140), the residual decomposition produces predictions the Kaggle holdout penalises more — likely because the Pythagorean term introduces correlated errors on teams that systematically over/under-perform their run differential. Plain RidgeCV on the full feature set generalises better.
+**Conclusion:** Both approaches are definitively worse on Kaggle:
+- Pythagorean residual: ties locally but degrades Kaggle (correlated errors from pyth term)
+- Year-level normalisation (`R_vs_lg`, etc.): `mlb_rpg` already in the feature set captures the same signal; explicit normalisation adds redundancy and hurts both local and Kaggle MAE
 
-## Next Sensible Versions
+**v11 RidgeCV (3.04393) is the best achievable score with this feature set and model family.** The ~0.22 local/Kaggle gap is structural — driven by year-on-year scoring variance within eras that cannot be resolved with the available columns.
 
-1. Investigate year-level features (league-average runs/game per season) to reduce the structural ~0.22 local/Kaggle gap.
-2. Add Kaggle public leaderboard scores to the version table after each submission.
+## Final Leaderboard Summary
+
+| Rank | Version | Model | Features | Kaggle Public |
+|---|---|---|---|---|
+| 🥇 | v11 | RidgeCV α=1.0 | 69 | **3.04393** |
+| 2 | v6 | RidgeCV α=1.0 | 67 | 3.04416 |
+| 3 | v3 | RidgeCV α=1.0 | 55 | 3.04701 |
+| — | analytical | Pure Pythagorean | — | 3.61316 |
+
+All subsequent attempts (stratified split, interaction terms, residual model, year normalisation, tree/boosting models) failed to improve on v11.
