@@ -36,6 +36,7 @@ Use this section as the canonical experiment log. Update it every time the model
 | v7a | Random Forest — unconstrained (`max_depth=30, min_leaf=1`) | 67 | 1.2746 | 3.2712 | — | 0.8925 | — | Severe overfit: train MAE 1.27 vs test MAE 3.27. Deep trees memorise ~1,450 training samples. Not submitted. |
 | v7b | Random Forest — constrained (`max_depth=7, min_leaf=5, min_split=20`) | 67 | 2.4069 | 3.2824 | — | 0.8910 | — | Constraining closed the train/test gap but test MAE barely moved (3.27 → 3.28). RF still underperforms linear models. Not submitted. |
 | v8 | HuberRegressor — robust loss, grid-searched `epsilon` × `alpha` | 67 | 2.6073 | 2.8236 | — | 0.9215 | — | Best params: ε=1.75, α=1.0. Beats vanilla LinearRegression but trails RidgeCV by 0.006 MAE. High ε confirms few extreme outliers — robust loss adds limited value. Not submitted. |
+| v9 | GradientBoostingRegressor — sklearn defaults (`max_depth=3, n_estimators=100, lr=0.1`) | 67 | 2.2302 | 3.1893 | — | 0.8991 | — | Overfits similarly to RF despite shallower trees. Default regularisation insufficient for ~1,450 samples. Not submitted. |
 
 ## Why Feature Count Increased To 55
 
@@ -161,8 +162,20 @@ Two RF configurations were tested against the v6 feature set (67 features, ~1,45
 
 **Implication:** Further gains should come from gradient boosting with proper regularisation (XGBoost/LightGBM), better features, or feature selection — not from deeper/wider trees.
 
+## Tree-Based Model Exploration Finding (v7–v9)
+
+All three tree-based models tested so far underperform the best linear model (RidgeCV, test MAE 2.8177):
+
+| Model | Train MAE | Test MAE | Gap |
+|---|---|---|---|
+| RF unconstrained | 1.27 | 3.27 | 2.00 — severe overfit |
+| RF constrained | 2.41 | 3.28 | 0.87 — gap closed, still worse |
+| GradientBoosting (default) | 2.23 | 3.19 | 0.96 — overfits |
+
+**Finding:** Tree-based models consistently overfit on ~1,450 training samples with 67 features. The win-prediction problem is largely linear — the engineered features already capture the domain knowledge that trees would otherwise rediscover via splits. Further tree exploration should focus on histogram-based gradient boosting (`HistGradientBoostingRegressor`) which has built-in L2 regularisation and handles this dataset size more efficiently.
+
 ## Next Sensible Versions
 
-1. Try XGBoost or LightGBM with regularisation tuning — gradient boosting handles this dataset size better than RF.
+1. Try `HistGradientBoostingRegressor` (sklearn) — histogram-based boosting with native regularisation, faster CV, and better handling of small datasets than standard GBR.
 2. Use Lasso's near-zero coefficients to prune redundant features from the v6 set.
 3. Add Kaggle public leaderboard scores to the version table after each submission.
