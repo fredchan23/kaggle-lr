@@ -56,7 +56,7 @@ data.csv + predict.csv
 | v1 | LinearRegression (55 features + engineered) | 2.8067 | 0.9224 | — |
 | v3 | RidgeCV α=1.0 (55 features) | 2.7989 | 0.9227 | 3.04701 |
 | v6 | RidgeCV α=1.0 (67 features) | 2.8177 | 0.9219 | 3.04416 |
-| v11 (Current) | RidgeCV α=1.0 (69 features) | 2.8169 | 0.9219 | — |
+| v11 (Current) | RidgeCV α=1.0 (69 features) | 2.8169 | 0.9219 | 3.04393 |
 
 ## Engineered Features
 
