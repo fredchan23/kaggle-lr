@@ -31,7 +31,8 @@ Use this section as the canonical experiment log. Update it every time the model
 | v1 | Added engineered baseball features: `run_diff`, `run_diff_per_game`, `win_expectancy`, `hr_rate`, `bb_rate`, `so_rate`, `hit_rate`, `extra_base_hits`, `xbh_rate`, `steal_value`, `baserunning_value`, `pitching_whip_proxy` | 55 | 2.6107 | 2.8067 | 3.5308 | 0.9224 | `submission_predict.csv` | Previous baseline. Linear model with engineered features. |
 | v3 | Introduced RidgeCV for regularization comparison; refactored submission logic into a future-proof model registry & pipeline framework | 55 | 2.6155 | 2.7989 | 3.5235 | 0.9227 | `submission_RidgeCV_*.csv` | RidgeCV selected α=1.0 via 5-fold CV on MAE, yielding marginal improvement over LinearRegression (ΔTest MAE: −0.0078, ΔR²: +0.0003). Introduced centralized model registry; timestamped submission files prevent overwrites. |
 | v4 | Added LassoCV (L1 regularization) — cross-validates over α to drive less predictive coefficients to zero | 55 | — | — | — | — | `submission_LassoCV_*.csv` | L1 sparsity may help identify and drop redundant engineered features. Best α selected via 5-fold CV. |
-| v5 | Added ElasticNetCV (L1 + L2) — cross-validates over both α and l1_ratio | 55 | — | — | — | — | `submission_ElasticNetCV_*.csv` | **Current version.** Combines Ridge's coefficient shrinkage with Lasso's sparsity. Best α and l1_ratio selected via 5-fold CV over grids [0.0001…100] × [0.1, 0.25, 0.5, 0.75, 0.9]. |
+| v5 | Added ElasticNetCV (L1 + L2) — cross-validates over both α and l1_ratio | 55 | — | — | — | — | `submission_ElasticNetCV_*.csv` | Combines Ridge's coefficient shrinkage with Lasso's sparsity. Best α and l1_ratio selected via 5-fold CV over grids [0.0001…100] × [0.1, 0.25, 0.5, 0.75, 0.9]. |
+| v6 | Added 12 new engineered features: PythagoPat win expectancy, OBP proxy, ISO, contact rate, BABIP, FIP proxy, K/BB ratio, park-adjusted run diff, CG/SHO/DP/error rates | 67 | 2.6035 | 2.8177 | — | 0.9219 | `submission_RidgeCV_*.csv` | **Current version.** RidgeCV best model (α=1.0). Local test MAE slightly up vs v3 due to split variance, but Kaggle public score improved 3.04701 → 3.04416, confirming better generalisation. Park-factor adjustment and FIP proxy add the most signal. |
 
 ## Why Feature Count Increased To 55
 
@@ -146,6 +147,6 @@ Do not mix multiple experimental ideas in one commit. One versioned change per c
 
 ## Next Sensible Versions
 
-1. Fill in v4/v5 metrics after running the notebook and update the version table.
-2. Test whether Lasso's zero coefficients reveal redundant engineered features.
+1. Use Lasso's zero/near-zero coefficients to prune redundant features from the v6 set.
+2. Test polynomial or interaction terms on the highest-coefficient features (run_diff, win_expectancy).
 3. Add Kaggle public leaderboard scores to the version table after each submission.
