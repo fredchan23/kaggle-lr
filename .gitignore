@@ -1,4 +1,4 @@
 .ipynb_checkpoints/
 __pycache__/
 *.pyc
-submission_predict.csv
+submission_*.csv
