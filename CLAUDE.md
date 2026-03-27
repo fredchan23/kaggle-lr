@@ -55,7 +55,8 @@ data.csv + predict.csv
 | v0 | LinearRegression (43 features, no ERA) | 2.8918 | 0.9172 | — |
 | v1 | LinearRegression (55 features + engineered) | 2.8067 | 0.9224 | — |
 | v3 | RidgeCV α=1.0 (55 features) | 2.7989 | 0.9227 | 3.04701 |
-| v6 (Current) | RidgeCV α=1.0 (67 features) | 2.8177 | 0.9219 | 3.04416 |
+| v6 | RidgeCV α=1.0 (67 features) | 2.8177 | 0.9219 | 3.04416 |
+| v11 (Current) | RidgeCV α=1.0 (69 features) | 2.8169 | 0.9219 | — |
 
 ## Engineered Features
 
@@ -64,7 +65,7 @@ data.csv + predict.csv
 | Group | Features |
 |---|---|
 | Existing | `run_diff`, `run_diff_per_game`, `win_expectancy`, `hr_rate`, `bb_rate`, `so_rate`, `hit_rate`, `extra_base_hits`, `xbh_rate`, `steal_value`, `baserunning_value`, `pitching_whip_proxy` |
-| Pythagorean | `win_exp_pythagorean` (PythagoPat exponent ~1.83) |
+| Pythagorean | `win_exp_pythagorean` (PythagoPat), `win_exp_pythagenport` (Davenport scoring-env exponent), `win_exp_park_adj` (BPF/PPF-corrected) |
 | Batting quality | `obp_proxy`, `iso`, `contact_rate`, `babip` |
 | Pitching (DI) | `fip_proxy`, `k_bb_ratio` |
 | Park-adjusted | `park_adj_run_diff` (uses `BPF`/`PPF`) |
