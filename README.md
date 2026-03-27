@@ -28,7 +28,8 @@ Use this section as the canonical experiment log. Update it every time the model
 | Version | Change | Feature Count | Train MAE | Test MAE | Test RMSE | Test R² | Submission Output | Notes |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | v0 | Removed `ERA` from the default feature list to reduce redundant pitching information | 43 | 2.6630 | 2.8918 | 3.6451 | 0.9172 | `submission_predict.csv` | Metrics were effectively unchanged, suggesting `ERA` was not adding useful signal in the linear setup. |
-| v1 | Added engineered baseball features: `run_diff`, `run_diff_per_game`, `win_expectancy`, `hr_rate`, `bb_rate`, `so_rate`, `hit_rate`, `extra_base_hits`, `xbh_rate`, `steal_value`, `baserunning_value`, `pitching_whip_proxy` | 55 | 2.6107 | 2.8067 | 3.5308 | 0.9224 | `submission_predict.csv` | Best current version. Improved MAE, RMSE, and R² while keeping the model linear and interpretable. |
+| v1 | Added engineered baseball features: `run_diff`, `run_diff_per_game`, `win_expectancy`, `hr_rate`, `bb_rate`, `so_rate`, `hit_rate`, `extra_base_hits`, `xbh_rate`, `steal_value`, `baserunning_value`, `pitching_whip_proxy` | 55 | 2.6107 | 2.8067 | 3.5308 | 0.9224 | `submission_predict.csv` | Previous baseline. Linear model with engineered features. |
+| v3 | Introduced RidgeCV for regularization comparison; refactored submission logic into a future-proof model registry & pipeline framework | 55 | 2.6155 | 2.7989 | 3.5235 | 0.9227 | `submission_RidgeCV_*.csv` | **Current version.** RidgeCV selected α=1.0 via 5-fold CV on MAE, yielding marginal improvement over LinearRegression (ΔTest MAE: −0.0078, ΔR²: +0.0003). Most importantly, introduced centralized model registry for easy comparison and switching between models without duplicating submission logic. Timestamped submission files prevent overwrites. |
 
 ## Why Feature Count Increased To 55
 
@@ -59,6 +60,48 @@ When changing features, preprocessing, or model type:
 
 This keeps the model code, metrics, and generated submission aligned.
 
+## v3 Model Registry & Submission Pipeline
+
+Starting with **v3**, the notebook introduces a **centralized model registry** to support rapid comparison of multiple model variants without duplicating submission logic.
+
+### Key Components
+
+**1. Model Registry** (defines `models_config` dict)
+- Stores all trained models with their test metrics and hyperparameters
+- Makes it trivial to add new regularized variants (Lasso, ElasticNet, etc.)
+- Enables side-by-side comparison
+
+**2. `submit_model()` Function**
+- Single reusable function for generating predictions and submission CSVs
+- Automatically scales features using the fitted scaler
+- Generates timestamped filenames to prevent overwrites
+- Optional Kaggle API integration
+
+**3. Batch Submission Cell**
+- Generates submissions for **all registered models** in one cell execution
+- No code changes needed to add new models to submission pipeline
+
+**4. Deployment Selection Cell**
+- Comment/uncomment the desired model for deployment
+- Simplifies switching between LinearRegression and RidgeCV (or future variants)
+
+### Extending v3 for New Models
+
+To add a new regularized model variant:
+
+```python
+# In the model registry definition:
+'ElasticNetCV': {
+    'model': elasticnet_cv,
+    'test_mae': elasticnet_test_mae,
+    'test_r2': elasticnet_test_r2,
+    'l1_ratio': 0.5,
+    'version': 'v4_elastic',
+}
+```
+
+Then run the batch submission cell—no additional code changes needed. The submission cell will automatically generate `submission_ElasticNetCV_*.csv`.
+
 ## Git Tracking For Model Evolution
 
 Git should be used to track each model version so every metric change can be tied back to a concrete code change.
@@ -80,7 +123,7 @@ Use one commit per experiment. Example commit messages:
 ```bash
 git commit -am "v0 drop ERA from linear feature set"
 git commit -am "v1 add engineered baseball features"
-git commit -am "v2 compare ridge regression against linear baseline"
+git commit -am "v3 introduce RidgeCV and future-proof model registry"
 ```
 
 ### What To Record For Every Version
