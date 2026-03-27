@@ -29,7 +29,9 @@ Use this section as the canonical experiment log. Update it every time the model
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | v0 | Removed `ERA` from the default feature list to reduce redundant pitching information | 43 | 2.6630 | 2.8918 | 3.6451 | 0.9172 | `submission_predict.csv` | Metrics were effectively unchanged, suggesting `ERA` was not adding useful signal in the linear setup. |
 | v1 | Added engineered baseball features: `run_diff`, `run_diff_per_game`, `win_expectancy`, `hr_rate`, `bb_rate`, `so_rate`, `hit_rate`, `extra_base_hits`, `xbh_rate`, `steal_value`, `baserunning_value`, `pitching_whip_proxy` | 55 | 2.6107 | 2.8067 | 3.5308 | 0.9224 | `submission_predict.csv` | Previous baseline. Linear model with engineered features. |
-| v3 | Introduced RidgeCV for regularization comparison; refactored submission logic into a future-proof model registry & pipeline framework | 55 | 2.6155 | 2.7989 | 3.5235 | 0.9227 | `submission_RidgeCV_*.csv` | **Current version.** RidgeCV selected α=1.0 via 5-fold CV on MAE, yielding marginal improvement over LinearRegression (ΔTest MAE: −0.0078, ΔR²: +0.0003). Most importantly, introduced centralized model registry for easy comparison and switching between models without duplicating submission logic. Timestamped submission files prevent overwrites. |
+| v3 | Introduced RidgeCV for regularization comparison; refactored submission logic into a future-proof model registry & pipeline framework | 55 | 2.6155 | 2.7989 | 3.5235 | 0.9227 | `submission_RidgeCV_*.csv` | RidgeCV selected α=1.0 via 5-fold CV on MAE, yielding marginal improvement over LinearRegression (ΔTest MAE: −0.0078, ΔR²: +0.0003). Introduced centralized model registry; timestamped submission files prevent overwrites. |
+| v4 | Added LassoCV (L1 regularization) — cross-validates over α to drive less predictive coefficients to zero | 55 | — | — | — | — | `submission_LassoCV_*.csv` | L1 sparsity may help identify and drop redundant engineered features. Best α selected via 5-fold CV. |
+| v5 | Added ElasticNetCV (L1 + L2) — cross-validates over both α and l1_ratio | 55 | — | — | — | — | `submission_ElasticNetCV_*.csv` | **Current version.** Combines Ridge's coefficient shrinkage with Lasso's sparsity. Best α and l1_ratio selected via 5-fold CV over grids [0.0001…100] × [0.1, 0.25, 0.5, 0.75, 0.9]. |
 
 ## Why Feature Count Increased To 55
 
@@ -85,22 +87,19 @@ Starting with **v3**, the notebook introduces a **centralized model registry** t
 - Comment/uncomment the desired model for deployment
 - Simplifies switching between LinearRegression and RidgeCV (or future variants)
 
-### Extending v3 for New Models
+### Adding a New Model
 
-To add a new regularized model variant:
+Train the model, then call `register_model()` — that's it:
 
 ```python
-# In the model registry definition:
-'ElasticNetCV': {
-    'model': elasticnet_cv,
-    'test_mae': elasticnet_test_mae,
-    'test_r2': elasticnet_test_r2,
-    'l1_ratio': 0.5,
-    'version': 'v4_elastic',
-}
+from sklearn.linear_model import LassoCV
+
+lasso_cv = LassoCV(alphas=[...], cv=5, max_iter=10000)
+lasso_cv.fit(X_train_scaled, y_train)
+register_model("LassoCV", lasso_cv, alpha=lasso_cv.alpha_, version="v4_l1")
 ```
 
-Then run the batch submission cell—no additional code changes needed. The submission cell will automatically generate `submission_ElasticNetCV_*.csv`.
+Re-running `compare_models()`, the batch submission cell, and the deploy cell requires no further edits — they all iterate over the registry automatically.
 
 ## Git Tracking For Model Evolution
 
@@ -147,6 +146,6 @@ Do not mix multiple experimental ideas in one commit. One versioned change per c
 
 ## Next Sensible Versions
 
-1. Compare the current linear model against `RidgeCV` using cross-validated MAE.
-2. Test whether any engineered features are redundant by removing them one group at a time.
+1. Fill in v4/v5 metrics after running the notebook and update the version table.
+2. Test whether Lasso's zero coefficients reveal redundant engineered features.
 3. Add Kaggle public leaderboard scores to the version table after each submission.
