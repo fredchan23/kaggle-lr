@@ -40,7 +40,8 @@ Use this section as the canonical experiment log. Update it every time the model
 | v10 | HistGradientBoostingRegressor — 50-iter random search, early stopping | 67 | 2.3932 | 3.2632 | — | 0.8946 | — | Best params: `max_depth=2, min_leaf=20, lr=0.2, L2=1.0, max_leaf_nodes=31`. Heavily constrained but train/test gap persists (2.39 vs 3.26). All tree/boosting approaches exhausted. Not submitted. |
 | v11 | Added Pythagenport + park-adjusted Pythagorean features; retuned RidgeCV with wider alpha grid | 69 | 2.6035 | 2.8169 | — | 0.9219 | `submission_RidgeCV_*.csv` | **Best Kaggle score.** Pythagenport + park-adj Pythagorean both add signal. Alpha stays 1.0 on wider grid. Kaggle public: **3.04393**. |
 | v12 | Added `run_diff×win_exp` + `win_exp×G` interaction terms; stratified train/test split by era | 71 | 2.6047 | 2.7686 (LR) | — | 0.9314 | `submission_LinearRegression_*.csv` | Stratified split makes local eval more honest (MAE 2.81→2.77) but Kaggle score regressed to 3.05159 (LR) / 3.05325 (Ridge). Interaction terms + wider feature set overfit slightly. Random-split v11 RidgeCV still holds best Kaggle score. See local/Kaggle gap analysis below. |
-| v13 | Pythagorean Residual RidgeCV — Ridge trained on `actual_W − pyth_W`; final = `pyth_W + residual` | 71 | 2.6173 | 2.7659 | — | 0.9321 | `submission_PythagoreanResidualRidge_*.csv` | **Best local MAE across all models.** Cleaner target signal. But stratified split hurts Kaggle: 3.05304 vs v11's 3.04393. Residual α=1.0. |
+| v13 | Pythagorean Residual RidgeCV — stratified split | 71 | 2.6173 | 2.7659 | — | 0.9321 | `submission_PythagoreanResidualRidge_*.csv` | Best local MAE (2.7659) but Kaggle 3.05304. Stratified split + residual both tested. |
+| v14 | Pythagorean Residual RidgeCV — random split (same as v11 conditions) | 71 | 2.6057 | 2.8141 | — | 0.9221 | `submission_PythagoreanResidualRidge_*.csv` | Ties RidgeCV locally (2.8141 vs 2.8140) but Kaggle **3.05653** — definitively worse than plain RidgeCV. Residual formulation exhausted. |
 | analytical | Pure Pythagorean baseline: `W = round(R²/(R²+RA²) × G)` — no ML | — | — | 3.2942 | — | — | `submission_Pythagorean_*.csv` | Kaggle: **3.61316**. Confirms ML pipeline adds ~0.57 MAE of genuine signal over the analytical formula. Model is not adding noise. |
 
 ## Why Feature Count Increased To 55
@@ -196,8 +197,19 @@ Across all submitted versions, a persistent ~0.2 MAE gap exists between local te
 - The ~0.2 gap is likely driven by year-on-year variance in baseball scoring environment not fully captured by era/decade indicators
 - **v11 random-split RidgeCV holds the best Kaggle score (3.04393)**
 
+## Pythagorean Residual Finding (v13–v14) — CLOSED
+
+Tested both split strategies with the residual formulation:
+
+| Config | Local MAE | Kaggle |
+|---|---|---|
+| Stratified split (v13) | 2.7659 | 3.05304 |
+| Random split (v14) | 2.8141 | 3.05653 |
+| v11 plain RidgeCV (random) | 2.8169 | **3.04393** |
+
+**Conclusion:** Pythagorean residual is definitively worse on Kaggle regardless of split. Despite tying locally (2.8141 vs 2.8140), the residual decomposition produces predictions the Kaggle holdout penalises more — likely because the Pythagorean term introduces correlated errors on teams that systematically over/under-perform their run differential. Plain RidgeCV on the full feature set generalises better.
+
 ## Next Sensible Versions
 
-1. Revert to random split and re-run PythagoreanResidualRidge — best local model (2.7659) hasn't been tested with the random split that gave v11 its best Kaggle score.
-2. Investigate year-level features (e.g. league-average runs per game that season) to reduce year-on-year variance driving the local/Kaggle gap.
-3. Add Kaggle public leaderboard scores to the version table after each submission.
+1. Investigate year-level features (league-average runs/game per season) to reduce the structural ~0.22 local/Kaggle gap.
+2. Add Kaggle public leaderboard scores to the version table after each submission.
