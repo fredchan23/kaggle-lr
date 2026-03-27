@@ -35,6 +35,7 @@ Use this section as the canonical experiment log. Update it every time the model
 | v6 | Added 12 new engineered features: PythagoPat win expectancy, OBP proxy, ISO, contact rate, BABIP, FIP proxy, K/BB ratio, park-adjusted run diff, CG/SHO/DP/error rates | 67 | 2.6035 | 2.8177 | — | 0.9219 | `submission_RidgeCV_*.csv` | **Current best.** RidgeCV best model (α=1.0). Local test MAE slightly up vs v3 due to split variance, but Kaggle public score improved 3.04701 → 3.04416, confirming better generalisation. Park-factor adjustment and FIP proxy add the most signal. |
 | v7a | Random Forest — unconstrained (`max_depth=30, min_leaf=1`) | 67 | 1.2746 | 3.2712 | — | 0.8925 | — | Severe overfit: train MAE 1.27 vs test MAE 3.27. Deep trees memorise ~1,450 training samples. Not submitted. |
 | v7b | Random Forest — constrained (`max_depth=7, min_leaf=5, min_split=20`) | 67 | 2.4069 | 3.2824 | — | 0.8910 | — | Constraining closed the train/test gap but test MAE barely moved (3.27 → 3.28). RF still underperforms linear models. Not submitted. |
+| v8 | HuberRegressor — robust loss, grid-searched `epsilon` × `alpha` | 67 | 2.6073 | 2.8236 | — | 0.9215 | — | Best params: ε=1.75, α=1.0. Beats vanilla LinearRegression but trails RidgeCV by 0.006 MAE. High ε confirms few extreme outliers — robust loss adds limited value. Not submitted. |
 
 ## Why Feature Count Increased To 55
 
